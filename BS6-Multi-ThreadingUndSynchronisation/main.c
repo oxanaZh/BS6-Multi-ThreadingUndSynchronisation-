@@ -8,6 +8,9 @@
 #include "miniz.h"
 
 #define MAX_PATH 1024
+#define COMPILETHREADS 10
+
+pthread_mutex_t lock;
 
 typedef struct job{
 	char *path;
@@ -16,11 +19,32 @@ typedef struct job{
 }Job;
 static Queue jobQueue;
 void *readPath(char *path);
+void *compileFiles();
 
 int main(int argc, char *argv[]){
 	jobQueue = queue_create();
 	printf("argv[1]: %s\n", argv[1]);
-	readPath(argv[1]);
+
+	pthread_t reader;
+	int error = pthread_create(&reader,NULL,readPath(argv[1]),NULL);
+	pthread_t threads[COMPILETHREADS];
+	int threads_ids[COMPILETHREADS];
+	error = pthread_mutexattr_init(&lock);
+	if(error!=0)
+		exit(EXIT_FAILURE);
+	int i;
+	for(i=0;i<COMPILETHREADS;i++){
+		error = pthread_create(&threads[i],NULL,compileFiles,NULL);
+		if(error!=0)
+			exit(EXIT_FAILURE);
+		threads_ids[i] = i;
+	}
+
+	for(i=0;i<COMPILETHREADS;i++){
+		pthread_join(threads[i], NULL);
+	}
+
+	pthread_mutex_destroy(&lock);
 	return 0;
 }
 
@@ -48,4 +72,9 @@ void *readPath(char *path){
 	}
 	return NULL;
 
+}
+void *compileFiles(){
+	pthread_mutex_lock(&lock);
+	printf("test\n");
+	pthread_mutex_unlock(&lock);
 }
