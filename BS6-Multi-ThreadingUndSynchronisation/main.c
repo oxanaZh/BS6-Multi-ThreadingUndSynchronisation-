@@ -1,7 +1,12 @@
+#include <stdlib.h>
+#include <pthread.h>
+#include <sys/types.h>
+#include <dirent.h>
+#include <limits.h>
+
 #include "queue.h"
 #include "miniz.h"
-#include <pthread.h>
-#include <dirent.h>
+
 
 typedef struct job{
 	char *path;
@@ -17,9 +22,16 @@ int main(int argc, char *argv[]){
 	return 0;
 }
 
-int read(const char *path){
-	DIR *dir = opendir (path);
-	if(!dir){
-		return -1;
+int readPath(const char *path){
+	DIR *dir = NULL;
+	struct dirent *dptr = NULL;
+	if(!(dir = opendir(path))){
+		return 1;
 	}
+	while((dptr = readdir(dir))){
+
+
+	}
+
+	return 0;
 }
