@@ -1,7 +1,16 @@
 #include "queue.h"
-#include "miniz.c"
+#include "miniz.h"
+#include <pthread.h>
 
-int main(){
+typedef struct job{
+	char *dir;
+
+
+}Job;
+static Queue jobQueue;
+
+int main(int argc, char *argv[]){
+	jobQueue = queue_create();
 
 
 	return 0;
