@@ -7,6 +7,7 @@
 #include "queue.h"
 #include "miniz.h"
 
+#define MAX_PATH 1024
 
 typedef struct job{
 	char *path;
@@ -22,16 +23,18 @@ int main(int argc, char *argv[]){
 	return 0;
 }
 
-int readPath(const char *path){
+void *readPath(const char *path){
+	char resolved_path[MAX_PATH];
 	DIR *dir = NULL;
 	struct dirent *dptr = NULL;
-	if(!(dir = opendir(path))){
-		return 1;
+	if(realpath(path, resolved_path)){
+		if(!(dir = opendir(resolved_path))){
+			while((dptr = readdir(dir))){
+				dptr->d_name;
+
+			}
+		}
 	}
-	while((dptr = readdir(dir))){
+	return NULL;
 
-
-	}
-
-	return 0;
 }
