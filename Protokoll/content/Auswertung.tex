@@ -42,6 +42,9 @@ int main(int argc, char *argv[]){
 	Da an unsere Programm nur ein Argument übergegeben werden soll,
 	beachten wir nur die Inhalt von \command{argv[1]}.
 	\item wir definieren constante länge für die Pfad zu den Ordner mit \command{#define MAX_PATH 1024}
+	\item wir definieren constante Anzahl der Threads \command{#define COMPILETHREADS 10}
+	\item wir definieren Variable \command{pthread_mutex_t lock;}, die genutzt wird,
+	um aktiven Thread ...
 	\item um eine Job darzustellen definieren wir eine Struktur job mit typedef Job,
 	die eine Pfad zu dem Ordner beinhalten wird und Name der zukomprimierenden Datei.
 	\begin{lstlisting}
