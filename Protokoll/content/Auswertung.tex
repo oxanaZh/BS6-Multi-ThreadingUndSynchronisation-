@@ -1,7 +1,30 @@
 \section{Aufgabe 1}
+Sie sollen in dieser Aufgabe ein Programm entwickeln, das mehrere einzelne Dateien einliest,
+komprimiert und als neue Datei speichert.
+\begin{itemize}
+	\item Dem Programm wird per Kommandozeile ein Ordnerpfad übergeben.
+	\item Arbeiten Sie mit mehreren Threads. Ein Thread (Leser-Thread) liest die Dateien in dem
+	übergebenen Ordner ein und h ̈angt den Inhalt sowie den Dateipfad an eine Queue an.
+	Nutzen Sie dafür eine \command{struct Job}.
+	\item Eine zur Compilezeit konfigurierbare Anzahl von Threads (Komprimierungs-Thread) liest
+	jeweils einen Job aus der Queue, komprimiert seinen Inhalt und speichert diesen
+	im Format <alter Dateiname>.compr. Dies soll solange wiederholt werden,
+	bis die Queue leer und der Leser-Thread beendet ist.
+	\item Der Leser-Thread soll Dateien, die mit .compr enden, ignorieren.
+	\item Ein Komprimierungs-Thread bekommt bei seiner Erstellung als Parameter eine
+	Instanz-nummer zugeordnet, die ihn z.B. bei Debug-Ausgaben eindeutig identifiziert.
+	\item Die Zugriffe auf die Queue müssen synchronisiert, d.h. gegeneinander geschützt sein.
+	\item  Fügen Sie im Leser-Thread nach dem Einlesen einer Datei ein \command{sleep(1)} und in den
+	Kompressions-Threads nach dem Komprimieren ein \command{sleep(3)}  ein, um eine langsame Festplatte
+	und einen komplexen Kompressionsalgorithmus zu simulieren. Beobachten Sie, wie ihr Programm mit
+	und ohne die \command{sleep}-Anweisungen arbeitet.
+	\item Bestimmen Sie n ̈aherungsweise die Laufzeit bei unterschiedlicher Anzahl von
+	Kompressions-Threads, z. B. mit der Funktion \command{sdifftime()} in \command{main()}.
 
+\end{itemize}
 	\subsection{Vorbereitung}
-
+	Als vorbereitung haben wir die Datei \textit{main.c} erstellt, wo unsere program implemetiert wird,
+	und die empfohlenen Headers(\textit{queue.h}, \textit{miniz.h},\textit{pthread.h}) includiert.
 	\subsection{Durchführung}
 
 	\subsection{Fazit}
