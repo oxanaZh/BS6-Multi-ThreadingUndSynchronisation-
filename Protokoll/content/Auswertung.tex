@@ -26,7 +26,96 @@ komprimiert und als neue Datei speichert.
 	Als vorbereitung haben wir die Datei \textit{main.c} erstellt, wo unsere program implemetiert wird,
 	und die empfohlenen Headers(\textit{queue.h}, \textit{miniz.h},\textit{pthread.h}) includiert.
 	\subsection{Durchführung}
+\begin{itemize}
+	\item Damit an programm als Parameter ein Pfad zu den ordner übergegeben werden kann, haben wir die main
+	Methode so geschrieben, dass sie Argumente annehmen kann:
+\begin{lstlisting}{language=C}
+int main(int argc, char *argv[]){
+	...
+	return 0;
+}
+\end{lstlisting}
+	\command{int argc} beinhaltet immer die Anzahl der übergegebene Parameter,
+	\command{char *argv[]} beinhaltet die Parameter, die an Programm übergegeben wurde,
+	dabei \command{argv[0]} beinhaltet immer den Namen des Programms.
+	Ab \command{argv[1]} sind die von Benutzer angegebenen Parameter zugreifbar.
+	Da an unsere Programm nur ein Argument übergegeben werden soll,
+	beachten wir nur die Inhalt von \command{argv[1]}.
+	\item wir definieren constante länge für die Pfad zu den Ordner mit \command{#define MAX_PATH 1024}
+	\item um eine Job darzustellen definieren wir eine Struktur job mit typedef Job,
+	die eine Pfad zu dem Ordner beinhalten wird und Name der zukomprimierenden Datei.
+	\begin{lstlisting}
+typedef struct job{
+	char *path;
+	char *filename;
 
+}Job;
+\end{lstlisting}
+	\item folglich wir definieren Variable \command{static Queue jobQueue;}, die JobQueue darstellt
+	\item in \command{main} inizialisieren wir \command{jobQueue = queue_create();}
+	\item
+	\item für den Leser-Thread implementieren wir zuerst die Funktion \command{void *readPath(char *path)}
+	\begin{itemize}
+		\item wir definieren Variable \command{char resolved_path[MAX_PATH]},
+		die eine resolved Pfad beinhalten wird.
+		\item um Ordner information zu lesen nutzen wir Bibliothek \command{dirent.h},
+		außerdem definieren wir eine Variable  \command{DIR *dir = NULL;}, die directory stream beinhalten wird.
+		\item um die Ordner inhalt aus dem directory stream zu lesen,
+		definieren wir eine Variable \command{struct dirent *dptr = NULL;}
+		\item da jeder Ordner Dateien \textit{.}und \textit{..} beinhaltet, die ...
+		definieren wir zwei Variablen \command{char *dot = \".";} und \command{char *dotdot = \"..";},
+		die wir zum vergleich nutzen werden
+		\item um absolute pfad zu erhalten nutzen wir die Funktion \command{realpath(pfad, resolved_path)} aus der Standartbibliothek,
+		als parameter übergeben wir die von Benutzer erhaltene Pfad \command{path}
+		und unsere Variable \command{resolved_path}, die den ergebnis erhalten wird,
+		die Funktion wird ein \command{NULL} pointer zurückliefern, falls beim Pfadname auflösun ein Fehler auftritt,
+		deswegen können wir den Ergebnis der \command{realpath} in der If-Abfrage überprüfen,
+		und fall etwas mit dem Pfad nicht stimmt, kann die Funktion \command{readPath} ihr Arbeit abbrechen.
+	\begin{lstlisting}
+if(realpath(path, resolved_path)){}
+	\end{lstlisting}
+		\item wennPfad erfolgreich aufgelöst wurde können wir weiter vorgehen.
+		\item wir öffnen directory stream mit der Funktion \command{opendir(resolved_path)},
+		die Funktion wird \command{NULL} pointer zurückliefern wenn ein Fehler beim öffnen auftritt.
+		Wir fragen den resultet ebenfalls in der If-Abfrage, wenn der Ordner erfolgreich geöffnet wurde,
+		kann man weiter vorgehen, sons muss die Funktion \command{readPath} ihr Arbeit abbrechen.
+\begin{lstlisting}
+if((dir = opendir(resolved_path))){}
+	\end{lstlisting}
+		\item nun kann man mit der While-Schleife durch einzelne Einträge im directory stream durch iterieren,
+		dabei hilft uns die Variable \command{dptr}, die bei jeder Iteration auf nächste Eintrag zeigt.
+		Um nächsten Eintrag auszulesen, benutzen wir Funktion  \command{readdir(dir)},
+		die als Parameter directory stream annimmt
+\begin{lstlisting}
+while((dptr = readdir(dir))){}
+\end{lstlisting}
+		\item wir schließen die Dateien mit Namen \textit{.}und \textit{..} von Komprimieren aus,
+		indem wir Name des Aktuellen eintrags mit Variablen \command{dot} und \command{dotdot} vergleichen.
+		Und wenn es sich um diese Dateien handelt, geht die while schleife
+		ohne weiteres vorgenhen zum nächsten Iteration.
+\begin{lstlisting}
+if(strcmp(dptr->d_name, dot) == 0 ||
+	strcmp(dptr->d_name, dotdot)==0){
+	continue;
+}
+\end{lstlisting}
+	\item folglich wir allosieren Speicherplatz für ein Job
+\begin{lstlisting}
+	Job *j = (Job *) malloc(sizeof(Job));
+\end{lstlisting}
+	\item und weisen den neuen Job aktuelle Dateiname(mit dem zugriff \command{dptr->d_name})
+	und Pfad zu dem Ordner(\command{resolved_path}) zu
+\begin{lstlisting}
+	j->path = resolved_path;
+	j->filename = dptr->d_name;
+\end{lstlisting}
+	\item anschließend fügen wir neue Job zu der jobQueue hinzu
+	\begin{lstlisting
+	queue_insert(jobQueue, j);
+\end{lstlisting}
+	\item nach vollständige Iteration, schließen wir directory stream \command{closedir(dir)};
+\end{itemize}
+\end{itemize}
 	\subsection{Fazit}
 
 \newpage
