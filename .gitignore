@@ -1,4 +1,13 @@
 
 
 *.bin
-
+*.[oa]
+*~
+#latex
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.toc
+Protokoll.synctex.gz
