@@ -28,7 +28,7 @@ int main(int argc, char *argv[]){
 	int error;
 
 	pthread_t reader;
-	error = pthread_create(&reader,NULL,readPath(argv[1]),NULL);
+	error = pthread_create(&reader,NULL,readPath,(void*)argv[1]);
 	pthread_t threads[COMPILETHREADS];
 	int threads_ids[COMPILETHREADS];
 	error = pthread_mutexattr_init(&lock);
