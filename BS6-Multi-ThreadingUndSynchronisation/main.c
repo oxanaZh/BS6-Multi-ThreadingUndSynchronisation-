@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <pthread.h>
 #include <sys/types.h>
 #include <dirent.h>
@@ -18,15 +19,16 @@ typedef struct job{
 
 }Job;
 static Queue jobQueue;
-void *readPath(char *path);
-void *compileFiles();
+void *readPath(void *path);
+void *compressFiles();
 
 int main(int argc, char *argv[]){
 	jobQueue = queue_create();
-	printf("argv[1]: %s\n", argv[1]);
+	printf("argv[1]: %s\n",argv[1]);
+	int error;
 
 	pthread_t reader;
-	int error = pthread_create(&reader,NULL,readPath(argv[1]),NULL);
+	error = pthread_create(&reader,NULL,readPath(argv[1]),NULL);
 	pthread_t threads[COMPILETHREADS];
 	int threads_ids[COMPILETHREADS];
 	error = pthread_mutexattr_init(&lock);
@@ -34,7 +36,7 @@ int main(int argc, char *argv[]){
 		exit(EXIT_FAILURE);
 	int i;
 	for(i=0;i<COMPILETHREADS;i++){
-		error = pthread_create(&threads[i],NULL,compileFiles,NULL);
+		error = pthread_create(&threads[i],NULL,compressFiles,NULL);
 		if(error!=0)
 			exit(EXIT_FAILURE);
 		threads_ids[i] = i;
@@ -48,7 +50,7 @@ int main(int argc, char *argv[]){
 	return 0;
 }
 
-void *readPath(char *path){
+void *readPath(void *path){
 	char resolved_path[MAX_PATH];
 	DIR *dir = NULL;
 	struct dirent *dptr = NULL;
@@ -73,8 +75,10 @@ void *readPath(char *path){
 	return NULL;
 
 }
-void *compileFiles(){
+void *compressFiles(void *args){
 	pthread_mutex_lock(&lock);
 	printf("test\n");
 	pthread_mutex_unlock(&lock);
+
+	return NULL;
 }
