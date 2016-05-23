@@ -30,6 +30,7 @@
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1008589525" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.exe.debug.754994780" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.exe.debug">
+
 								<option id="gnu.c.link.option.ldflags.607417550" name="Linker flags" superClass="gnu.c.link.option.ldflags" value="-pthread" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.linker.input.657660322" superClass="cdt.managedbuild.tool.gnu.c.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
@@ -104,6 +105,7 @@
 		</scannerConfigBuildInfo>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
+
 	<storageModule moduleId="refreshScope" versionNumber="2">
 		<configuration configurationName="Debug">
 			<resource resourceType="PROJECT" workspacePath="/BS6-Multi-ThreadingUndSynchronisation"/>
@@ -112,4 +114,5 @@
 			<resource resourceType="PROJECT" workspacePath="/BS6-Multi-ThreadingUndSynchronisation"/>
 		</configuration>
 	</storageModule>
+
 </cproject>
