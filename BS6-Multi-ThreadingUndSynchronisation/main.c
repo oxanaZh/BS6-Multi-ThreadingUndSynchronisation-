@@ -88,9 +88,10 @@ void *readPath(char *path) {
 	return NULL;
 }
 void *compileFiles() {
+	pthread_mutex_lock(&lock);
 	Job *j;
 
-	pthread_mutex_lock(&lock);
+
 
 	if (queue_empty(jobQueue) == 0) {
 		j = queue_head(jobQueue);
@@ -102,23 +103,38 @@ void *compileFiles() {
 		return NULL;
 	}
 	pthread_mutex_unlock(&lock);
-	/*
-	 //Result *r = compress_string(j->filename);
-	 char * newfile = j->filename;
-	 char * compressed = ".compr";
-	 strcat(newfile,compressed);
-	 j->filename = newfile;
+	FILE * read;
+	FILE * write;
+	char * compressed = ".compr";
 
-	 compressed = strcat(j->path,newfile);
-	 printf("%s",compressed);
-	 FILE *fp;
-	 fp = fopen(compressed, "w+");
-	 fprintf(fp, "This is testing for fprintf...\n");
-	 fclose(fp);
-	 */
-	//free(r->data);
-	//free(r);
-	//free(j);
+	char * absoluteFilename = j->path;
+	strcat(absoluteFilename,"/");
+	strcat(absoluteFilename,j->filename);
+	printf("absoluteFilename %s\n",absoluteFilename );
+
+	char * newfile = j->path;
+	strcat(newfile,"/");
+	strcat(newfile,j->filename);
+	strcat(newfile,compressed);
+	printf("newfile %s\n",newfile);
+
+	read = fopen (absoluteFilename, "r");
+	write =fopen (newfile, "w+");
+
+	if(!read || !write){
+		return NULL;
+	}
+	const int lineLength = 255;
+	char buff[lineLength];
+
+	while(fgets(buff, lineLength, (FILE*)read)){
+		Result *r = compress_string(buff);
+		fputs(r->data,(FILE*)write );
+		free(r->data);
+		free(r);
+	}
+	fclose(read);
+	fclose(write);
 
 	return NULL;
 
