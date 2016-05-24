@@ -16,6 +16,7 @@ pthread_mutex_t lock;
 typedef struct job {
 	char *path;
 	char *filename;
+	char *newfilename;
 
 } Job;
 static Queue jobQueue;
@@ -65,6 +66,7 @@ void *readPath(char *path) {
 	struct dirent *dptr = NULL;
 	char *dot = ".";
 	char *dotdot = "..";
+	char * compressed = ".compr";
 	if (realpath(path, resolved_path)) {
 		printf("resolved_path: %s\n", resolved_path);
 		if ((dir = opendir(resolved_path))) {
@@ -78,7 +80,12 @@ void *readPath(char *path) {
 				if (!j)
 					exit(EXIT_FAILURE);
 				j->path = resolved_path;
-				j->filename = dptr->d_name;
+				strcat(j->path,"/");
+
+				j->filename = j->path;
+				strcat(j->path,dptr->d_name);
+				j->newfilename = j->filename;
+				strcat(j->newfilename,compressed);
 				queue_insert(jobQueue, j);
 				printf("file: %s\n", j->filename);
 			}
@@ -105,17 +112,10 @@ void *compileFiles() {
 	pthread_mutex_unlock(&lock);
 	FILE * read;
 	FILE * write;
-	char * compressed = ".compr";
 
-	char * absoluteFilename = j->path;
-	strcat(absoluteFilename,"/");
-	strcat(absoluteFilename,j->filename);
-	printf("absoluteFilename %s\n",absoluteFilename );
-
-	char * newfile = j->path;
-	strcat(newfile,"/");
-	strcat(newfile,j->filename);
-	strcat(newfile,compressed);
+	char * absoluteFilename = j->filename;
+	printf("absoluteFilename %s\n",absoluteFilename);
+	char * newfile = j->newfilename;
 	printf("newfile %s\n",newfile);
 
 	read = fopen (absoluteFilename, "r");
