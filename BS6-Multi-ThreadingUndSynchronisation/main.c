@@ -12,6 +12,8 @@
 #define COMPILETHREADS 10
 
 pthread_mutex_t lock;
+pthread_mutex_t starter_mutex;
+pthread_cond_t starter_threshold_cv;
 
 typedef struct job {
 	char *path;
@@ -32,7 +34,8 @@ void* readPath(void* path) {
 		printf("resolved_path: %s\n", resolved_path);
 		if ((dir = opendir(resolved_path))) {
 			while ((dptr = readdir(dir))) {
-				if (strcmp(dptr->d_name, dot) == 0 || strcmp(dptr->d_name, dotdot) == 0 || strstr(dptr->d_name, compressed) != NULL){
+				if (strcmp(dptr->d_name, dot)
+						== 0|| strcmp(dptr->d_name, dotdot) == 0 || strstr(dptr->d_name, compressed) != NULL) {
 					continue;
 				}
 				Job *j = (Job *) malloc(sizeof(Job));
@@ -43,121 +46,150 @@ void* readPath(void* path) {
 				setJob(resolved_path, dptr->d_name, j);
 				queue_insert(jobQueue, j);
 				printf("file: %s\n", j->filename);
+				sleep(1);
 			}
 			closedir(dir);
 		}
 	}
+	printf("READER DONE\n");
 	return NULL;
 }
-void *compileFiles(void *arg);
+void *compressFiles(void *arg);
+void *startComprThreads(void * arg);
 void setJob(char *path, char *file, Job* job);
 
 int main(int argc, char *argv[]) {
 	jobQueue = queue_create();
-	printf("argv[1]: %s\n", argv[1]);
 
+	printf("argv[1]: %s\n", argv[1]);
 	pthread_t reader;
-	//int error = pthread_create(&reader, NULL, readPath, (void*) argv[1]);
-	//pthread_join(reader, NULL);
-	int error = 0;
-	readPath(argv[1]);
+
+	int error = pthread_create(&reader, NULL, readPath, (void*) argv[1]);
 	if (error != 0)
 		exit(EXIT_FAILURE);
 
-	pthread_t threads[COMPILETHREADS];
-
-	int threads_ids[COMPILETHREADS];
 
 	pthread_mutex_init(&lock, NULL);
+	pthread_mutex_init(&starter_mutex, NULL);
+	pthread_cond_init(&starter_threshold_cv, NULL);
 
-	int i;
+	pthread_t starter;
+	error = pthread_create(&starter, NULL, startComprThreads, NULL);
 
-	for (i = 0; i < COMPILETHREADS; i++) {
-		error = pthread_create(&threads[i], NULL, compileFiles, NULL);
-		if (error != 0)
-			exit(EXIT_FAILURE);
-		threads_ids[i] = i;
-	}
-	//pthread_join(reader, NULL);
-	for (i = 0; i < COMPILETHREADS; i++) {
-		pthread_join(threads[i], NULL);
-	}
-	printf("finished");
+	pthread_join(reader, NULL);
+
+	pthread_mutex_lock(&starter_mutex);
+	pthread_cond_wait(&starter_threshold_cv, &starter_mutex);
+	pthread_mutex_unlock(&starter_mutex);
+
+	printf("\n\n\nFinishedCompressing!!!");
+
+
 	pthread_mutex_destroy(&lock);
-
+	pthread_mutex_destroy(&starter_mutex);
+	pthread_cond_destroy(&starter_threshold_cv);
 	return 0;
 }
 
-void *compileFiles(void * arg) {
+void *startComprThreads(void * arg) {
+	pthread_t threads[COMPILETHREADS];
+	int threads_ids[COMPILETHREADS];
+	int i;
+	int error;
+	while (1) {
+		for (i = 0; i < COMPILETHREADS; i++) {
+			error = pthread_create(&threads[i], NULL, compressFiles, (void*)i);
+			threads_ids[i]=i;
+			if (error != 0)
+				exit(EXIT_FAILURE);
+		}
+		for (i = 0; i < COMPILETHREADS; i++) {
+			pthread_join(threads[i], NULL);
+		}
+		if (queue_empty(jobQueue) != 0) {
+			pthread_mutex_lock(&starter_mutex);
+			pthread_cond_signal(&starter_threshold_cv);
+			pthread_mutex_unlock(&starter_mutex);
+		}
+
+	}
+	return NULL;
+}
+
+void *compressFiles(void * arg) {
+	int id = (int*) arg;
+
 	pthread_mutex_lock(&lock);
 	Job *j;
-
-
 
 	if (queue_empty(jobQueue) == 0) {
 		j = queue_head(jobQueue);
 		queue_delete(jobQueue);
 		printf(">> %s\n", j->filename);
 	} else {
-		printf("finished");
 		pthread_mutex_unlock(&lock);
+		printf("Thread %d hat keinen Auftrag\n",id);
 		return NULL;
 	}
 	pthread_mutex_unlock(&lock);
+	printf("Thread %d komprimiert\n",id);
 	FILE * read;
 	FILE * write;
 
 	char * absoluteFilename = j->filename;
-	printf("absoluteFilename %s\n",absoluteFilename);
+	printf("absoluteFilename %s\n", absoluteFilename);
 	char * newfile = j->newfilename;
-	printf("compress newfile %s\n",newfile);
+	printf("compress newfile %s\n", newfile);
 
-	read = fopen (absoluteFilename, "r");
-	write =fopen (newfile, "w+");
+	read = fopen(absoluteFilename, "r");
+	write = fopen(newfile, "w+");
 
-	if(!read || !write){
+	if (!read || !write) {
 		return NULL;
 	}
 	const int lineLength = 255;
 	char buff[lineLength];
 	Result *r = compress_string(buff);
-	while(fgets(buff, lineLength, (FILE*)read)){
+	while (fgets(buff, lineLength, (FILE*) read)) {
 
-		fputs(r->data,(FILE*)write );
+		fputs(r->data, (FILE*) write);
 
 	}
 	free(r->data);
-			free(r);
+	free(r);
 	fclose(read);
 	fclose(write);
-
+	free(j->filename);
+	free(j->newfilename);
+	free(j->path);
+	free(j);
+	sleep(3);
 	return NULL;
 
 }
 
-void setJob(char *path, char *file, Job* job){
+void setJob(char *path, char *file, Job* job) {
 	printf("setJob----- \n\n");
 	char * compressed = ".compr";
-	printf("path: %s\n",path);
-	printf("filename: %s\n",file);
-	printf("job path: %s\n",job->path);
+	printf("path: %s\n", path);
+	printf("filename: %s\n", file);
+
 
 	job->path = (char *) malloc(MAX_PATH);
 	strcpy(job->path, path);
 
 	job->filename = (char *) malloc(MAX_PATH);
-	strcpy(job->filename,job->path);
+	strcpy(job->filename, job->path);
 
-	strcat(job->filename,"/");
-	strcat(job->filename,file);
+	strcat(job->filename, "/");
+	strcat(job->filename, file);
 
 	job->newfilename = (char *) malloc(MAX_PATH);
-	strcpy(job->newfilename,job->filename);
-	strcat(job->newfilename,compressed);
+	strcpy(job->newfilename, job->filename);
+	strcat(job->newfilename, compressed);
 
-	printf("job path: %s\n",job->path);
-	printf("job filename: %s\n",job->filename);
-	printf("job newfilename: %s\n\n",job->newfilename);
-
+	printf("job path: %s\n", job->path);
+	printf("job filename: %s\n", job->filename);
+	printf("job newfilename: %s\n\n", job->newfilename);
 
 }
