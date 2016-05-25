@@ -27,12 +27,12 @@ void* readPath(void* path) {
 	struct dirent *dptr = NULL;
 	char* dot = ".";
 	char* dotdot = "..";
+	char * compressed = ".compr";
 	if (realpath((char*) path, resolved_path)) {
 		printf("resolved_path: %s\n", resolved_path);
 		if ((dir = opendir(resolved_path))) {
 			while ((dptr = readdir(dir))) {
-				if (strcmp(dptr->d_name, dot) == 0
-						|| strcmp(dptr->d_name, dotdot) == 0) {
+				if (strcmp(dptr->d_name, dot) == 0 || strcmp(dptr->d_name, dotdot) == 0 || strstr(dptr->d_name, compressed) != NULL){
 					continue;
 				}
 				Job *j = (Job *) malloc(sizeof(Job));
